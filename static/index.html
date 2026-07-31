@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Магазин</title>
+<style>
+  :root{
+    --page-1: #17102b;
+    --page-2: #2b1a4d;
+    --card: rgba(255,255,255,0.055);
+    --card-strong: rgba(255,255,255,0.09);
+    --line: rgba(255,255,255,0.09);
+    --text: #f3eefe;
+    --text-dim: #a99bcf;
+    --text-dim2: #7d6ea3;
+    --accent: #8b5cf6;
+    --accent-2: #a78bfa;
+    --accent-bright: #9d6bff;
+    --accent-dark: #6d28d9;
+    --danger: #f2596a;
+    --ok: #38c793;
+    --gold: #f5b942;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; height:100%;
+    background: var(--page-1);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #app{
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background:
+      radial-gradient(120% 60% at 50% 0%, var(--page-2) 0%, var(--page-1) 65%);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* fake Telegram mini-app chrome, purely cosmetic */
+  .tg-chrome{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 10px 16px 8px 16px;
+    background: #0d0a17;
+  }
+  .tg-chrome .close{ color:#5b9bff; font-size:15px; font-weight:500; }
+  .tg-chrome .center{ text-align:center; }
+  .tg-chrome .center .t{ font-size:15px; font-weight:700; color:#fff; }
+  .tg-chrome .center .s{ font-size:11px; color:#8a8a99; margin-top:1px; }
+  .tg-chrome .dots{
+    width:28px; height:28px; border-radius:50%;
+    border:1.5px solid #3a3750; color:#8a8a99;
+    display:flex; align-items:center; justify-content:center; font-size:14px;
+    cursor:pointer;
+  }
+
+  .toppanel{ padding: 14px 16px 10px 16px; }
+
+  .plaque{
+    background: linear-gradient(135deg, rgba(139,92,246,0.22), rgba(109,40,217,0.14));
+    border: 1px solid rgba(167,139,250,0.28);
+    border-radius: var(--radius);
+    padding: 18px 16px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; text-align:center;
+    margin-bottom: 10px;
+    animation: fadeUp 0.4s cubic-bezier(.22,.85,.35,1) both;
+  }
+  .plaque .emoji{
+    font-size:28px; flex:0 0 auto; line-height:1;
+    filter: drop-shadow(0 4px 10px rgba(139,92,246,0.45));
+    animation: floatIcon 3s ease-in-out infinite;
+  }
+  .plaque .emoji svg{ display:block; width:34px; height:34px; }
+  .plaque .name{
+    font-size:20px; font-weight:800; letter-spacing:-0.01em; line-height:1.25;
+    background: linear-gradient(135deg, #c9adff, var(--accent-2) 55%, #b48bff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  @keyframes floatIcon{ 0%,100%{ transform: translateY(0) rotate(0deg);} 50%{ transform: translateY(-3px) rotate(-4deg);} }
+
+  .balance-strip{
+    background: var(--card-strong);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    display:flex; align-items:center; justify-content:space-between;
+    cursor:pointer;
+    margin-bottom: 12px;
+    transition: transform 0.15s ease, background 0.15s ease;
+    animation: fadeUp 0.4s cubic-bezier(.22,.85,.35,1) both;
+    animation-delay: 0.05s;
+  }
+  .balance-strip:active{ transform: scale(0.98); background: var(--card-strong); }
+  .balance-strip .left{ display:flex; align-items:center; gap:10px; color: var(--text-dim); font-size:14px; font-weight:600; }
+  .balance-strip .amount{ font-size:17px; font-weight:800; color: var(--accent-2); }
+
+  @keyframes fadeUp{ from{ opacity:0; transform: translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  .tabs{
+    display:flex; gap:6px; padding-bottom:2px;
+    margin-bottom: 6px;
+    animation: fadeUp 0.4s cubic-bezier(.22,.85,.35,1) both;
+    animation-delay: 0.1s;
+  }
+  .tab-pill{
+    flex: 1 1 0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    padding: 9px 4px 8px 4px; border-radius: 14px;
+    background: transparent; color: var(--text-dim2);
+    font-size:11px; font-weight:650; border:1px solid transparent;
+    cursor:pointer; white-space:nowrap; min-width:0;
+    transition: background 0.2s cubic-bezier(.22,.85,.35,1), color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  }
+  .tab-pill .ic{ font-size:19px; line-height:1; }
+  .tab-pill .lb{ overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .tab-pill:active{ transform: scale(0.94); }
+  .tab-pill.active{
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color:#fff;
+    box-shadow: 0 6px 16px rgba(139,92,246,0.35);
+  }
+  @keyframes iconBounce{ 0%{ transform: scale(0.6) rotate(-8deg);} 55%{ transform: scale(1.25) rotate(4deg);} 100%{ transform: scale(1) rotate(0);} }
+  .tab-pill.active .ic{ animation: iconBounce 0.38s cubic-bezier(.22,.9,.32,1); }
+
+  @keyframes switchBump{ 0%,100%{ transform: scale(1);} 40%{ transform: scale(1.08);} }
+  .switch.bump{ animation: switchBump 0.28s ease; }
+
+  main{ flex:1; padding: 6px 16px 96px 16px; position:relative; }
+  #view{ animation: viewIn 0.3s cubic-bezier(.22,.85,.35,1); }
+  @keyframes viewIn{ from{ opacity:0; transform: translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+  .subheader{
+    display:flex; align-items:center; gap:10px; margin: 4px 0 12px 0;
+  }
+  .subheader .back{
+    width:32px; height:32px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    background: var(--card); border:none; cursor:pointer;
+    color: var(--accent-2); font-size:17px; flex:0 0 auto;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .subheader .back:active{ transform: scale(0.9); background: var(--card-strong); }
+  .subheader .title{ font-size:16px; font-weight:750; }
+
+  /* grid category cards, matching the reference screenshot */
+  .cat-grid{
+    display:grid; grid-template-columns: 1fr 1fr; gap:10px;
+  }
+  .cat-card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 12px;
+    display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px;
+    cursor:pointer;
+    transition: transform 0.16s cubic-bezier(.22,.85,.35,1), background 0.16s ease, border-color 0.16s ease;
+    animation: cardIn 0.36s cubic-bezier(.22,.85,.35,1) both;
+  }
+  @keyframes cardIn{ from{opacity:0; transform: translateY(8px) scale(0.97);} to{opacity:1; transform:translateY(0) scale(1);} }
+  .cat-card:active{ transform: scale(0.96); background: var(--card-strong); border-color: rgba(167,139,250,0.35); }
+  .cat-card .folder{ font-size:34px; line-height:1; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.35)); }
+  .cat-card .folder svg{ display:block; width:40px; height:40px; }
+  .cat-card .title{ font-size:14px; font-weight:700; line-height:1.25; }
+  .cat-card .count{ font-size:12px; color: var(--text-dim2); }
+
+  /* generic list card (products / cart / admin / etc) */
+  .card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 13px;
+    margin-bottom: 10px;
+    transition: transform 0.16s cubic-bezier(.22,.85,.35,1), background 0.16s ease;
+    animation: cardIn 0.34s cubic-bezier(.22,.85,.35,1) both;
+  }
+  .row{ display:flex; align-items:center; gap:12px; cursor:pointer; user-select:none; }
+  .card.row:active{ transform: scale(0.98); background: var(--card-strong); }
+  .icon-box{
+    width:44px; height:44px; border-radius: 12px;
+    background: rgba(167,139,250,0.14);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 20px; flex:0 0 auto;
+    transition: transform 0.18s ease;
+  }
+  .row:active .icon-box{ transform: scale(0.92); }
+  .row-text{ flex:1; min-width:0; }
+  .row-title{ font-weight:650; font-size:15px; }
+  .row-sub{ color: var(--text-dim); font-size:13px; margin-top:2px; }
+  .chevron{ color: var(--accent-2); font-size:18px; flex:0 0 auto; }
+
+  .price-tag{ font-weight:750; color: var(--accent-2); font-size:14px; white-space:nowrap; }
+
+  .section-label{
+    font-size:12px; text-transform:uppercase; letter-spacing:0.05em;
+    color: var(--text-dim2); margin: 18px 0 8px 2px; font-weight:700;
+  }
+  .section-label:first-child{ margin-top:0; }
+
+  .empty{ text-align:center; color: var(--text-dim); padding: 40px 20px; font-size:14px; line-height:1.5; animation: cardIn 0.4s ease both; }
+  .empty .em-icon{ font-size:32px; margin-bottom:10px; }
+
+  .btn{
+    display:block; width:100%; text-align:center;
+    padding: 13px 16px; border-radius: 13px;
+    border:none; font-size:15px; font-weight:650; cursor:pointer;
+    transition: transform 0.14s cubic-bezier(.22,.85,.35,1), box-shadow 0.14s ease, opacity 0.14s ease;
+  }
+  .btn-primary{ background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color:#fff; box-shadow: 0 8px 18px rgba(139,92,246,0.32); }
+  .btn-primary:active{ transform: scale(0.97); box-shadow: 0 4px 10px rgba(139,92,246,0.25); }
+  .btn-secondary{ background: var(--card-strong); color: var(--text); border:1px solid var(--line); }
+  .btn-secondary:active{ transform: scale(0.97); }
+  .btn-outline{ background: transparent; color: var(--accent-2); border:1.5px solid var(--accent-2); }
+  .btn-outline:active{ transform: scale(0.97); background: rgba(167,139,250,0.1); }
+  .btn-danger{ background: rgba(242,89,106,0.14); color: var(--danger); }
+  .btn-danger:active{ transform: scale(0.97); }
+  .btn-row{ display:flex; gap:8px; }
+  .btn-row .btn{ flex:1; }
+  .btn[disabled]{ opacity:0.4; cursor:default; transform:none !important; }
+
+  .product-hero{
+    height: 160px; border-radius: var(--radius);
+    background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(109,40,217,0.12));
+    display:flex; align-items:center; justify-content:center;
+    font-size: 42px; margin-bottom: 14px;
+  }
+  .product-title{ font-size:19px; font-weight:750; margin: 0 0 4px 0; }
+  .product-price{ font-size:20px; font-weight:750; color: var(--accent-2); margin-bottom: 12px; }
+  .product-desc{ color: var(--text-dim); font-size:14px; line-height:1.55; margin-bottom: 18px; }
+  .badge-auto{
+    display:inline-flex; align-items:center; gap:4px;
+    background: rgba(245,185,66,0.16); color: var(--gold); font-size:12px; font-weight:650;
+    padding: 5px 9px; border-radius:999px; margin-bottom:12px;
+  }
+
+  .stepper{ display:flex; align-items:center; gap:12px; background: var(--card-strong); border-radius: 999px; padding:4px; width: fit-content; }
+  .stepper button{ width:32px; height:32px; border-radius:50%; border:none; background: rgba(255,255,255,0.08); color: var(--text); font-size:16px; font-weight:750; cursor:pointer; transition: transform 0.14s ease; }
+  .stepper button:active{ transform: scale(0.88); }
+  .stepper span{ min-width:20px; text-align:center; font-weight:700; }
+
+  .cart-item{ display:flex; align-items:center; gap:12px; }
+  .cart-item .row-text{ flex:1; }
+  .qty-controls{ display:flex; align-items:center; gap:8px; }
+  .qty-controls button{ width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background: var(--card-strong); color: var(--text); cursor:pointer; font-weight:700; font-size:14px; line-height:1; transition: transform 0.14s ease; }
+  .qty-controls button:active{ transform: scale(0.85); }
+
+  .summary-row{ display:flex; justify-content:space-between; padding: 6px 2px; font-size:14px; color: var(--text-dim); }
+  .summary-row.total{ font-size:16px; font-weight:750; color: var(--text); border-top: 1px solid var(--line); margin-top:6px; padding-top:12px; }
+
+  .profile-row{ display:flex; justify-content:space-between; align-items:center; padding: 12px 0; border-bottom: 1px solid var(--line); font-size:14px; }
+  .profile-row:last-child{ border-bottom:none; }
+  .profile-row .k{ color: var(--text-dim); }
+  .profile-row .v{ font-weight:650; }
+
+  .switch-row{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; }
+  .switch{ width:46px; height:26px; border-radius:999px; background: var(--card-strong); position:relative; cursor:pointer; transition: background 0.22s ease; flex:0 0 auto; }
+  .switch.on{ background: var(--accent); }
+  .switch .knob{ position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.22s cubic-bezier(.22,.85,.35,1); }
+  .switch.on .knob{ transform: translateX(20px); }
+
+  .rating-summary{ display:flex; align-items:center; gap:16px; margin-bottom:14px; }
+  .rating-big{ font-size:34px; font-weight:750; }
+  .rating-stars{ color: var(--gold); font-size:14px; }
+  .bar-line{ display:flex; align-items:center; gap:8px; font-size:12px; color: var(--text-dim); margin-bottom:4px; }
+  .bar-track{ flex:1; height:6px; border-radius:3px; background: var(--card-strong); overflow:hidden; }
+  .bar-fill{ height:100%; background: linear-gradient(90deg, var(--accent-2), var(--gold)); transition: width 0.5s cubic-bezier(.22,.85,.35,1); }
+  .review-item{ margin-bottom:12px; }
+  .review-item .stars{ color: var(--gold); font-size:13px; }
+  .review-item .who{ font-weight:650; font-size:13px; margin-bottom:2px; }
+  .review-item .txt{ font-size:14px; color: var(--text); margin-top:4px; line-height:1.45; }
+
+  .stat-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:16px; }
+  .stat-box{ background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding:12px; }
+  .stat-box .n{ font-size:20px; font-weight:750; color: var(--accent-2); }
+  .stat-box .l{ font-size:12px; color: var(--text-dim); margin-top:2px; }
+
+  #toast{
+    position: fixed; left:50%; bottom: 24px; transform: translateX(-50%) translateY(14px) scale(0.96);
+    background: rgba(20,15,35,0.95); border:1px solid var(--line); color:#fff; padding: 10px 16px;
+    border-radius: 999px; font-size:13px; opacity:0; pointer-events:none;
+    transition: opacity 0.25s cubic-bezier(.22,.85,.35,1), transform 0.25s cubic-bezier(.22,.85,.35,1);
+    z-index: 999; white-space:nowrap;
+  }
+  #toast.show{ opacity:1; transform: translateX(-50%) translateY(0) scale(1); }
+
+  .overlay{
+    position: fixed; inset:0; background: rgba(10,7,20,0.55);
+    display:flex; align-items:flex-end; justify-content:center; z-index: 200;
+    opacity:0; pointer-events:none; transition: opacity 0.25s ease;
+  }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+  .sheet{
+    background: #221737; width:100%; max-width:480px;
+    border: 1px solid var(--line); border-bottom:none;
+    border-radius: 20px 20px 0 0; padding: 18px 16px 24px 16px;
+    transform: translateY(100%);
+    transition: transform 0.32s cubic-bezier(.22,.9,.32,1);
+    max-height: 82vh; overflow-y:auto;
+  }
+  .overlay.show .sheet{ transform: translateY(0); }
+  .sheet h3{ margin:0 0 12px 0; font-size:16px; color: var(--text); }
+  .sheet input, .sheet textarea, .sheet select{
+    width:100%; border:1.5px solid var(--line); border-radius:10px;
+    background: rgba(255,255,255,0.05); color: var(--text);
+    padding: 10px 12px; font-size:14px; margin-bottom:12px; font-family:inherit;
+    transition: border-color 0.15s ease;
+  }
+  .sheet input:focus, .sheet textarea:focus, .sheet select:focus{ outline:none; border-color: var(--accent-2); }
+  .sheet textarea{ resize:vertical; min-height:70px; }
+  .sheet option{ background:#221737; }
+  .star-pick{ display:flex; gap:8px; margin-bottom:14px; font-size:26px; }
+  .star-pick span{ cursor:pointer; color:#4a4363; transition: transform 0.15s ease, color 0.15s ease; display:inline-block; }
+  .star-pick span.on{ color: var(--gold); transform: scale(1.08); }
+
+  .admin-banner{
+    background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.18));
+    border: 1px solid rgba(167,139,250,0.3);
+    color:#fff; border-radius: var(--radius); padding:14px 16px; margin-bottom:14px;
+    display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600;
+  }
+  .pending-badge{ background: var(--danger); color:#fff; font-size:11px; font-weight:750; border-radius:999px; padding: 1px 7px; margin-left:6px; }
+  .req-card{ border-left: 3px solid var(--accent); }
+  .req-card.type-topup{ border-left-color: var(--gold); }
+  .tag{ display:inline-block; font-size:11px; font-weight:700; padding:3px 8px; border-radius:999px; background: rgba(167,139,250,0.16); color: var(--accent-2); }
+  .fab{
+    position: fixed; right: 20px; bottom: 24px; z-index: 50;
+    width:52px; height:52px; border-radius:50%; border:none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color:#fff; font-size:24px; box-shadow: 0 10px 22px rgba(139,92,246,0.45);
+    cursor:pointer; transition: transform 0.16s cubic-bezier(.22,.85,.35,1);
+  }
+  .fab:active{ transform: scale(0.9); }
+  .btn, .tab-pill, .cat-card, .card.row, .fab{
+    position: relative; overflow: hidden;
+  }
+  .ripple{
+    position:absolute; border-radius:50%;
+    background: rgba(255,255,255,0.5);
+    transform: scale(0);
+    animation: rippleAnim 0.55s cubic-bezier(.22,.85,.35,1) forwards;
+    pointer-events:none;
+  }
+  @keyframes rippleAnim{ to{ transform: scale(1); opacity:0; } }
+
+  @keyframes balancePulse{
+    0%{ transform: scale(1); }
+    35%{ transform: scale(1.18); color: var(--gold); }
+    100%{ transform: scale(1); }
+  }
+  .balance-strip .amount.pulse{ animation: balancePulse 0.5s cubic-bezier(.22,.85,.35,1); display:inline-block; }
+
+  @keyframes badgePulse{
+    0%,100%{ box-shadow: 0 0 0 0 rgba(242,89,106,0.55); }
+    50%{ box-shadow: 0 0 0 4px rgba(242,89,106,0); }
+  }
+  .pending-badge{ animation: badgePulse 1.6s ease-out infinite; }
+
+  @keyframes toastPop{ 0%{ transform: translateX(-50%) translateY(14px) scale(0.9);} 60%{ transform: translateX(-50%) translateY(-2px) scale(1.03);} 100%{ transform: translateX(-50%) translateY(0) scale(1);} }
+  #toast.show{ animation: toastPop 0.35s cubic-bezier(.22,.9,.32,1); }
+
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+  .spinner{ width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.35); border-top-color:#fff; display:inline-block; animation: spin 0.7s linear infinite; vertical-align:-3px; margin-right:6px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+<div id="app">
+  <div class="tg-chrome">
+    <div class="close">Закрыть</div>
+    <div class="center">
+      <div class="t" id="chromeTitle">Магазин</div>
+      <div class="s">мини-приложение</div>
+    </div>
+    <div class="dots" id="menuDots">⋯</div>
+  </div>
+
+  <div class="toppanel">
+    <div class="plaque">
+      <div class="emoji">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="joyGrad" x1="2" y1="6" x2="22" y2="18" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#b794f6"/><stop offset="1" stop-color="#7c3aed"/>
+            </linearGradient>
+          </defs>
+          <path d="M7 6h10a5 5 0 0 1 5 5v4.5a3.5 3.5 0 0 1-6.4 1.97L14.6 16H9.4l-1 1.47A3.5 3.5 0 0 1 2 14.5V11a5 5 0 0 1 5-5z" fill="url(#joyGrad)"/>
+          <circle cx="7.2" cy="11" r="0.9" fill="#fff" opacity="0.9"/>
+          <path d="M7.2 9.6v2.8M5.8 11h2.8" stroke="#fff" stroke-width="0.9" stroke-linecap="round"/>
+          <circle cx="16.6" cy="10.2" r="0.95" fill="#fff" opacity="0.9"/>
+          <circle cx="18.6" cy="12.2" r="0.95" fill="#fff" opacity="0.6"/>
+        </svg>
+      </div>
+      <div class="name" id="plaqueName">Магазин</div>
+    </div>
+    <div class="balance-strip" id="balanceStrip">
+      <div class="left">💰 Баланс</div>
+      <div class="amount" id="balanceAmount">⭐ 0</div>
+    </div>
+    <div class="tabs" id="tabs">
+      <div class="tab-pill" data-tab="catalog"><span class="ic">🛍️</span><span class="lb">Товары</span></div>
+      <div class="tab-pill" data-tab="cart"><span class="ic">🛒</span><span class="lb">Корзина</span></div>
+      <div class="tab-pill" data-tab="profile"><span class="ic">👤</span><span class="lb">Профиль</span></div>
+      <div class="tab-pill" data-tab="reviews"><span class="ic">⭐</span><span class="lb">Отзывы</span></div>
+      <div class="tab-pill" data-tab="about"><span class="ic">ℹ️</span><span class="lb">О нас</span></div>
+    </div>
+  </div>
+
+  <main>
+    <div id="view"></div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet" id="sheetContent"></div>
+</div>
+
+<script>
+/* =========================================================
+   Telegram Mini App: реальный бэкенд вместо макетных данных.
+   Все действия идут через fetch() к /api/*, авторизация — через
+   Telegram.WebApp.initData (заголовок X-Telegram-Init-Data).
+   ========================================================= */
+const tgApp = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if (tgApp) {
+  tgApp.ready();
+  tgApp.expand();
+  try { tgApp.setHeaderColor('#17102b'); tgApp.setBackgroundColor('#17102b'); } catch (e) {}
+}
+
+function tgInitData() {
+  return (tgApp && tgApp.initData) || '';
+}
+
+async function api(path, opts = {}) {
+  const headers = Object.assign(
+    { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': tgInitData() },
+    opts.headers || {}
+  );
+  const res = await fetch(path, Object.assign({}, opts, { headers }));
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok) {
+    toast(data.error || 'Ошибка запроса');
+    throw new Error(data.error || res.statusText);
+  }
+  return data;
+}
+
+async function apiForm(path, formData) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'X-Telegram-Init-Data': tgInitData() },
+    body: formData,
+  });
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok) {
+    toast(data.error || 'Ошибка запроса');
+    throw new Error(data.error || res.statusText);
+  }
+  return data;
+}
+
+let state = {
+  tab: 'catalog',
+  view: 'categories',
+  categoryId: null,
+  productId: null,
+  isAdmin: false,
+  adminView: 'menu',
+
+  settings: { shop_name: 'Магазин', support_username: '@' },
+  user: { id: null, username: 'user', balance_star: 0 },
+
+  categories: [],
+  products: [],
+  cart: {},
+  reviews: [],
+  purchasesConfirmed: 0,
+  myRequests: [],
+  reviewablePurchases: [],
+
+  admin: { loaded: false, requests: [], users: [], admins: [], broadcastLog: null },
+};
+let _prevBalance = 0;
+let _loading = true;
+
+/* ---- universal ripple / tap feedback on interactive elements ---- */
+function spawnRipple(el, clientX, clientY) {
+  const rect = el.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height) * 1.6;
+  const span = document.createElement('span');
+  span.className = 'ripple';
+  span.style.width = span.style.height = size + 'px';
+  span.style.left = (clientX - rect.left - size / 2) + 'px';
+  span.style.top = (clientY - rect.top - size / 2) + 'px';
+  el.appendChild(span);
+  span.addEventListener('animationend', () => span.remove());
+}
+document.addEventListener('pointerdown', (e) => {
+  const el = e.target.closest('.btn:not([disabled]), .tab-pill, .cat-card, .card.row, .fab');
+  if (!el) return;
+  spawnRipple(el, e.clientX, e.clientY);
+});
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1900);
+}
+function openSheet(html) {
+  document.getElementById('sheetContent').innerHTML = html;
+  document.getElementById('overlay').classList.add('show');
+}
+function closeSheet() { document.getElementById('overlay').classList.remove('show'); }
+document.getElementById('overlay').addEventListener('click', (e) => { if (e.target.id === 'overlay') closeSheet(); });
+
+function go(view, extra) { state.view = view; if (extra) Object.assign(state, extra); render(); }
+function setTab(tab) {
+  state.tab = tab;
+  if (tab === 'catalog') go('categories');
+  else if (tab === 'cart') go('cart');
+  else if (tab === 'profile') go('profile');
+  else if (tab === 'reviews') go('reviews');
+  else if (tab === 'about') go('about');
+}
+async function goAdmin(view, extra) {
+  state.tab = 'admin'; state.view = 'admin'; state.adminView = view;
+  if (extra) Object.assign(state, extra);
+  if (!state.admin.loaded) {
+    await loadAdminData();
+  }
+  render();
+}
+async function loadAdminData() {
+  const data = await api('/api/admin/bootstrap');
+  state.admin.loaded = true;
+  state.admin.requests = data.requests;
+  state.admin.users = data.users;
+  state.admin.admins = data.admins;
+  // категории/товары держим общими с основным каталогом — синхронизируем
+  state.categories = data.categories;
+  state.products = data.products;
+}
+
+document.querySelectorAll('.tab-pill').forEach(btn => {
+  btn.addEventListener('click', () => setTab(btn.dataset.tab));
+});
+document.getElementById('balanceStrip').addEventListener('click', () => setTab('profile'));
+document.getElementById('menuDots').addEventListener('click', () => {
+  openSheet(`
+    <h3>Меню</h3>
+    <button class="btn btn-secondary" id="menuAbout" style="margin-bottom:8px;">ℹ️ О магазине</button>
+    <button class="btn btn-secondary" id="menuSupport" style="margin-bottom:8px;">📞 Поддержка ${state.settings.support_username}</button>
+    ${state.isAdmin ? `<button class="btn btn-primary" id="menuAdmin">⚙️ Админ-панель</button>` : ''}
+  `);
+  document.getElementById('menuAbout').onclick = () => { closeSheet(); setTab('about'); };
+  document.getElementById('menuSupport').onclick = () => { closeSheet(); openSupportLink(); };
+  const ma = document.getElementById('menuAdmin');
+  if (ma) ma.onclick = () => { closeSheet(); goAdmin('menu'); };
+});
+function openSupportLink() {
+  const uname = (state.settings.support_username || '').replace('@', '');
+  if (!uname) { toast('Юзернейм поддержки не задан'); return; }
+  if (tgApp) tgApp.openTelegramLink(`https://t.me/${uname}`);
+  else window.open(`https://t.me/${uname}`, '_blank');
+}
+
+function folderSVG() {
+  return `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="fg1" x1="4" y1="10" x2="36" y2="32" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#c9c9d6"/><stop offset="1" stop-color="#8f8fa3"/>
+      </linearGradient>
+      <linearGradient id="fg2" x1="4" y1="14" x2="36" y2="34" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#eef0f6"/><stop offset="1" stop-color="#b9bacb"/>
+      </linearGradient>
+    </defs>
+    <path d="M4 12c0-1.1.9-2 2-2h9l3 3h16c1.1 0 2 .9 2 2v3H4v-6z" fill="url(#fg1)"/>
+    <path d="M3 15h34c1.1 0 1.9.98 1.72 2.06l-2.1 12.6A3 3 0 0 1 33.66 32H6.34a3 3 0 0 1-2.96-2.34l-2.1-12.6C1.1 15.98 1.9 15 3 15z" fill="url(#fg2)"/>
+  </svg>`;
+}
+function cartCount() { return Object.values(state.cart).reduce((a, b) => a + b, 0); }
+function cartTotal() {
+  let sum = 0;
+  for (const pid in state.cart) {
+    const p = state.products.find(x => x.id == pid);
+    if (p) sum += p.star_price * state.cart[pid];
+  }
+  return sum;
+}
+async function addToCart(pid, qty) {
+  const data = await api('/api/cart/update', { method: 'POST', body: JSON.stringify({ product_id: pid, delta: qty }) });
+  state.cart = data.cart;
+  toast('Добавлено в корзину');
+}
+function pendingCount() { return state.myRequests.filter(r => r.status === 'pending').length; }
+
+/* ============== RENDER ============== */
+function render() {
+  document.getElementById('chromeTitle').textContent = state.settings.shop_name;
+  document.getElementById('plaqueName').textContent = state.settings.shop_name;
+  const balanceEl = document.getElementById('balanceAmount');
+  balanceEl.textContent = `⭐ ${state.user.balance_star}`;
+  if (state.user.balance_star !== _prevBalance) {
+    balanceEl.classList.remove('pulse'); void balanceEl.offsetWidth;
+    balanceEl.classList.add('pulse');
+    _prevBalance = state.user.balance_star;
+  }
+
+  document.querySelectorAll('.tab-pill').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === state.tab);
+  });
+
+  const view = document.getElementById('view');
+  view.style.animation = 'none'; void view.offsetWidth; view.style.animation = '';
+
+  let html = '';
+  if (_loading) html = `<div class="empty">Загрузка…</div>`;
+  else if (state.view === 'categories') html = renderCategories();
+  else if (state.view === 'products') html = subheader('Товары', () => go('categories')) + renderProducts();
+  else if (state.view === 'product') html = subheader('Товар', () => go('products', { categoryId: state.categoryId })) + renderProduct();
+  else if (state.view === 'cart') html = renderCart();
+  else if (state.view === 'profile') html = renderProfile();
+  else if (state.view === 'reviews') html = renderReviews();
+  else if (state.view === 'about') html = renderAbout();
+  else if (state.view === 'admin') html = renderAdmin();
+
+  view.innerHTML = html;
+  bindDynamic();
+}
+
+function subheader(title, backFn) {
+  window.__back = backFn;
+  return `<div class="subheader"><button class="back" onclick="window.__back()">‹</button><div class="title">${title}</div></div>`;
+}
+
+function renderCategories() {
+  if (state.categories.length === 0) return `<div class="empty"><div class="em-icon">🗂️</div>Категорий пока нет.</div>`;
+  return `
+    <div class="section-label">Категории</div>
+    <div class="cat-grid">
+      ${state.categories.map((c, i) => `
+        <div class="cat-card" style="animation-delay:${i * 40}ms" data-open-cat="${c.id}">
+          <div class="folder">${folderSVG()}</div>
+          <div class="title">${c.name}</div>
+          <div class="count">${state.products.filter(p => p.category_id === c.id).length} товаров</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+function renderProducts() {
+  const items = state.products.filter(p => p.category_id === state.categoryId);
+  if (items.length === 0) return `<div class="empty"><div class="em-icon">📦</div>В этой категории пока нет товаров.</div>`;
+  return items.map((p, i) => `
+    <div class="card row" style="animation-delay:${i * 40}ms" data-open-prod="${p.id}">
+      <div class="icon-box">🛒</div>
+      <div class="row-text">
+        <div class="row-title">${p.name}</div>
+        ${p.auto_delivery ? '<div class="row-sub">⚡ Выдаётся автоматически</div>' : ''}
+      </div>
+      <div class="price-tag">⭐ ${p.star_price}</div>
+    </div>
+  `).join('');
+}
+function renderProduct() {
+  const p = state.products.find(x => x.id === state.productId);
+  if (!p) return `<div class="empty">Товар не найден.</div>`;
+  return `
+    <div class="product-hero">🛒</div>
+    <div class="product-title">${p.name}</div>
+    <div class="product-price">⭐ ${p.star_price}</div>
+    ${p.auto_delivery ? '<div class="badge-auto">⚡ Выдаётся автоматически сразу после оплаты</div>' : ''}
+    <div class="product-desc">${p.description || 'Без описания.'}</div>
+    <div class="section-label">Количество</div>
+    <div class="stepper" style="margin-bottom:18px;">
+      <button id="qtyMinus">−</button><span id="qtyValue">1</span><button id="qtyPlus">+</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="addCartBtn">В корзину</button>
+      <button class="btn btn-primary" id="buyNowBtn">Купить за ⭐ <span id="buyPrice">${p.star_price}</span></button>
+    </div>
+  `;
+}
+function renderCart() {
+  const ids = Object.keys(state.cart);
+  let html = `<div class="section-label">Корзина</div>`;
+  if (ids.length === 0) return html + `<div class="empty"><div class="em-icon">🛒</div>Корзина пуста.<br>Загляните в каталог.</div>`;
+  html += ids.map(pid => {
+    const p = state.products.find(x => x.id == pid);
+    if (!p) return '';
+    const qty = state.cart[pid];
+    return `
+      <div class="card cart-item">
+        <div class="icon-box">🛒</div>
+        <div class="row-text"><div class="row-title">${p.name}</div><div class="row-sub">⭐ ${p.star_price} / шт</div></div>
+        <div class="qty-controls">
+          <button data-cart-minus="${pid}">−</button><span>${qty}</span><button data-cart-plus="${pid}">+</button>
+        </div>
+      </div>`;
+  }).join('');
+  html += `
+    <div class="card">
+      <div class="summary-row"><span>Товаров</span><span>${cartCount()}</span></div>
+      <div class="summary-row total"><span>Итого</span><span>⭐ ${cartTotal()}</span></div>
+    </div>
+    <button class="btn btn-primary" id="checkoutBtn">Оформить заказ</button>
+  `;
+  return html;
+}
+function renderProfile() {
+  return `
+    <div class="section-label">Профиль</div>
+    <div class="card">
+      <div class="profile-row"><span class="k">Имя пользователя</span><span class="v">@${state.user.username}</span></div>
+      <div class="profile-row"><span class="k">Баланс</span><span class="v">⭐ ${state.user.balance_star}</span></div>
+      <div class="profile-row"><span class="k">Подтверждённых покупок</span><span class="v">${state.purchasesConfirmed}</span></div>
+      <div class="profile-row"><span class="k">Заявок в ожидании</span><span class="v">${pendingCount()}</span></div>
+    </div>
+    <button class="btn btn-outline" id="topupBtn" style="margin-bottom:18px;">Пополнить баланс</button>
+
+    <div class="section-label">Поддержка</div>
+    <div class="card row" id="supportRow">
+      <div class="icon-box">📞</div>
+      <div class="row-text"><div class="row-title">Связаться с поддержкой</div><div class="row-sub">${state.settings.support_username}</div></div>
+      <div class="chevron">›</div>
+    </div>
+
+    ${state.isAdmin ? `<button class="btn btn-secondary" id="openAdminBtn">⚙️ Админ-панель</button>` : ''}
+  `;
+}
+function renderReviews() {
+  const total = state.reviews.length;
+  const avg = total ? (state.reviews.reduce((a, r) => a + r.rating, 0) / total).toFixed(1) : 0;
+  const dist = [5, 4, 3, 2, 1].map(star => state.reviews.filter(r => r.rating === star).length);
+  const maxCount = Math.max(1, ...dist);
+  return `
+    <div class="section-label">Отзывы</div>
+    <div class="rating-summary">
+      <div class="rating-big">${avg}</div>
+      <div style="flex:1;">
+        <div class="rating-stars">${'★'.repeat(Math.round(avg))}${'☆'.repeat(5 - Math.round(avg))}</div>
+        <div class="row-sub">${total} отзыв(ов)</div>
+      </div>
+    </div>
+    ${[5, 4, 3, 2, 1].map((star, i) => `
+      <div class="bar-line"><span>${star}★</span><div class="bar-track"><div class="bar-fill" style="width:${(dist[i] / maxCount * 100)}%"></div></div><span>${dist[i]}</span></div>
+    `).join('')}
+    <button class="btn btn-primary" style="margin: 16px 0;" id="leaveReviewBtn">Оставить отзыв</button>
+    <div class="section-label">Все отзывы</div>
+    ${state.reviews.map(r => `
+      <div class="card review-item">
+        <div class="who">${r.username}</div>
+        <div class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
+        ${r.text ? `<div class="txt">${r.text}</div>` : ''}
+      </div>`).join('')}
+  `;
+}
+function renderAbout() {
+  const autoCount = state.products.filter(p => p.auto_delivery).length;
+  const avg = state.reviews.length ? (state.reviews.reduce((a, r) => a + r.rating, 0) / state.reviews.length).toFixed(1) : '—';
+  return `
+    <div class="section-label">О магазине</div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="n">${state.categories.length}</div><div class="l">Категорий</div></div>
+      <div class="stat-box"><div class="n">${state.products.length}</div><div class="l">Товаров</div></div>
+      <div class="stat-box"><div class="n">${autoCount}</div><div class="l">С авто-выдачей</div></div>
+      <div class="stat-box"><div class="n">${avg}</div><div class="l">Рейтинг (${state.reviews.length} отз.)</div></div>
+    </div>
+    <div class="card">
+      <div class="profile-row"><span class="k">Способ оплаты</span><span class="v">Telegram Stars ⭐</span></div>
+      <div class="profile-row"><span class="k">Авто-выдача</span><span class="v">${autoCount} из ${state.products.length} товаров</span></div>
+      <div class="profile-row"><span class="k">Поддержка</span><span class="v">${state.settings.support_username}</span></div>
+    </div>
+    <div class="section-label">Как это работает</div>
+    <div class="card" style="font-size:14px; color:var(--text-dim); line-height:1.6;">
+      Оплата принимается в Telegram Stars — напрямую или с внутреннего баланса.
+      После оплаты товар выдаётся автоматически (если для него настроена авто-выдача)
+      прямо в этот чат, либо вручную через поддержку.
+    </div>
+  `;
+}
+
+/* ============== АДМИН-ПАНЕЛЬ ============== */
+function renderAdmin() {
+  const a = state.admin;
+  if (state.adminView === 'menu') {
+    const pending = a.requests.filter(r => r.status === 'pending').length;
+    return subheader('Админ-панель', () => setTab('profile')) + `
+      <div class="admin-banner">👑 Вы вошли как администратор</div>
+      <div class="card row" data-admin-go="requests">
+        <div class="icon-box">📦</div>
+        <div class="row-text"><div class="row-title">Заявки${pending ? `<span class="pending-badge">${pending}</span>` : ''}</div><div class="row-sub">Подтверждение покупок и пополнений</div></div>
+        <div class="chevron">›</div>
+      </div>
+      <div class="card row" data-admin-go="categories">
+        <div class="icon-box">🗂️</div>
+        <div class="row-text"><div class="row-title">Категории</div><div class="row-sub">${state.categories.length} шт.</div></div>
+        <div class="chevron">›</div>
+      </div>
+      <div class="card row" data-admin-go="products">
+        <div class="icon-box">🛍️</div>
+        <div class="row-text"><div class="row-title">Товары</div><div class="row-sub">${state.products.length} шт.</div></div>
+        <div class="chevron">›</div>
+      </div>
+      <div class="card row" data-admin-go="settings">
+        <div class="icon-box">⚙️</div>
+        <div class="row-text"><div class="row-title">Настройки</div><div class="row-sub">Название, поддержка</div></div>
+        <div class="chevron">›</div>
+      </div>
+      <div class="card row" data-admin-go="admins">
+        <div class="icon-box">👑</div>
+        <div class="row-text"><div class="row-title">Админы</div><div class="row-sub">${a.admins.length} шт.</div></div>
+        <div class="chevron">›</div>
+      </div>
+      <div class="card row" data-admin-go="users">
+        <div class="icon-box">👥</div>
+        <div class="row-text"><div class="row-title">Пользователи</div><div class="row-sub">${a.users.length} шт. · ${a.users.filter(u => u.banned).length} забанено</div></div>
+        <div class="chevron">›</div>
+      </div>
+      <div class="card row" data-admin-go="broadcast">
+        <div class="icon-box">📢</div>
+        <div class="row-text"><div class="row-title">Рассылка</div><div class="row-sub">Сообщение всем пользователям</div></div>
+        <div class="chevron">›</div>
+      </div>
+    `;
+  }
+  if (state.adminView === 'requests') {
+    const pending = a.requests.filter(r => r.status === 'pending');
+    return subheader('Заявки', () => goAdmin('menu')) + (pending.length === 0
+      ? `<div class="empty"><div class="em-icon">📭</div>Новых заявок нет — Stars подтверждаются автоматически.</div>`
+      : pending.map(r => `
+        <div class="card req-card ${r.type === 'topup' ? 'type-topup' : ''}">
+          <div class="row-title">${r.type === 'purchase' ? `Покупка: ${r.productName || ''}` : r.type === 'cart' ? 'Заказ (корзина)' : 'Пополнение баланса'}</div>
+          <div class="row-sub">${r.username} · <span class="tag">⭐ ${r.amount}</span></div>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn btn-danger" data-req-reject="${r.id}">❌ Отклонить</button>
+            <button class="btn btn-primary" data-req-approve="${r.id}">✅ Подтвердить</button>
+          </div>
+        </div>
+      `).join(''));
+  }
+  if (state.adminView === 'categories') {
+    return subheader('Категории', () => goAdmin('menu')) + `
+      ${state.categories.map(c => `
+        <div class="card">
+          <div class="row" style="margin-bottom:0;">
+            <div class="icon-box">📂</div>
+            <div class="row-text"><div class="row-title">${c.name}</div><div class="row-sub">${state.products.filter(p => p.category_id === c.id).length} товар(ов)</div></div>
+          </div>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn btn-secondary" data-cat-rename="${c.id}">✏️ Переименовать</button>
+            <button class="btn btn-danger" data-cat-delete="${c.id}">🗑️ Удалить</button>
+          </div>
+        </div>
+      `).join('')}
+      <button class="fab" id="addCatFab">+</button>
+    `;
+  }
+  if (state.adminView === 'products') {
+    return subheader('Товары', () => goAdmin('menu')) + `
+      ${state.products.map(p => {
+        const cat = state.categories.find(c => c.id === p.category_id);
+        return `
+        <div class="card">
+          <div class="row" style="margin-bottom:0;">
+            <div class="icon-box">🛒</div>
+            <div class="row-text">
+              <div class="row-title">${p.name}</div>
+              <div class="row-sub">${cat ? cat.name : 'Без категории'} · ⭐ ${p.star_price} ${p.auto_delivery ? '· ⚡ авто-выдача' : ''}</div>
+            </div>
+          </div>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn btn-secondary" data-prod-edit="${p.id}">✏️ Изменить</button>
+            <button class="btn btn-danger" data-prod-delete="${p.id}">🗑️ Удалить</button>
+          </div>
+          <button class="btn btn-outline" style="margin-top:8px;" data-prod-delivery="${p.id}">🚚 Авто-выдача</button>
+        </div>`;
+      }).join('')}
+      <button class="fab" id="addProdFab">+</button>
+    `;
+  }
+  if (state.adminView === 'settings') {
+    return subheader('Настройки', () => goAdmin('menu')) + `
+      <div class="card row" data-setting-edit="shop_name">
+        <div class="icon-box">🏷️</div>
+        <div class="row-text"><div class="row-title">Название магазина</div><div class="row-sub">${state.settings.shop_name}</div></div>
+        <div class="chevron">›</div>
+      </div>
+      <div class="card row" data-setting-edit="support_username">
+        <div class="icon-box">📞</div>
+        <div class="row-text"><div class="row-title">Юзернейм поддержки</div><div class="row-sub">${state.settings.support_username}</div></div>
+        <div class="chevron">›</div>
+      </div>
+    `;
+  }
+  if (state.adminView === 'admins') {
+    return subheader('Админы', () => goAdmin('menu')) + `
+      ${a.admins.map(ad => `
+        <div class="card row">
+          <div class="icon-box">${ad.isOwner ? '👑' : '🛡️'}</div>
+          <div class="row-text"><div class="row-title">@${ad.username}</div><div class="row-sub">${ad.isOwner ? 'Владелец (из .env)' : 'Добавлен через панель'}</div></div>
+          ${!ad.isOwner ? `<button class="btn btn-danger" style="width:auto; padding:8px 12px;" data-admin-remove="${ad.id}">🗑️</button>` : ''}
+        </div>
+      `).join('')}
+      <button class="btn btn-primary" id="addAdminBtn" style="margin-top:8px;">➕ Добавить админа</button>
+    `;
+  }
+  if (state.adminView === 'users') {
+    return subheader('Пользователи', () => goAdmin('menu')) + `
+      <div class="card" style="font-size:13px; color:var(--text-dim); line-height:1.55;">
+        ⛔ Бан — пользователь не сможет писать боту и покупать.<br>
+        ➕ Баланс — начислить или списать ⭐ вручную.<br>
+        💳 Обнулить — сбросить баланс пользователя.
+      </div>
+      ${a.users.map(u => `
+        <div class="card">
+          <div class="row" style="margin-bottom:0;">
+            <div class="icon-box">${u.banned ? '⛔' : '👤'}</div>
+            <div class="row-text">
+              <div class="row-title">@${u.username} ${u.banned ? '<span class="tag" style="background:rgba(242,89,106,0.16); color:var(--danger);">забанен</span>' : ''}</div>
+              <div class="row-sub">ID ${u.id} · ⭐ ${u.balance_star}</div>
+            </div>
+          </div>
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn ${u.banned ? 'btn-secondary' : 'btn-danger'}" data-user-ban="${u.id}">${u.banned ? '✅ Разбанить' : '⛔ Забанить'}</button>
+            <button class="btn btn-secondary" data-user-addbal="${u.id}">➕ Баланс</button>
+          </div>
+          <button class="btn btn-outline" style="margin-top:8px;" data-user-reset="${u.id}">💳 Обнулить баланс</button>
+        </div>
+      `).join('')}
+    `;
+  }
+  if (state.adminView === 'broadcast') {
+    return subheader('Рассылка', () => goAdmin('menu')) + `
+      <div class="card" style="font-size:13px; color:var(--text-dim); line-height:1.55; margin-bottom:14px;">
+        📢 Сообщение уйдёт всем пользователям бота (${a.users.length} чел.). Поддерживается обычный текст.
+      </div>
+      <textarea id="broadcastText" placeholder="Текст рассылки..." style="width:100%; min-height:110px; border:1.5px solid var(--line); border-radius:12px; background:rgba(255,255,255,0.05); color:var(--text); padding:12px; font-size:14px; font-family:inherit; margin-bottom:12px;"></textarea>
+      <button class="btn btn-primary" id="sendBroadcastBtn">📤 Отправить всем</button>
+      ${a.broadcastLog ? `<div class="card" style="margin-top:14px;"><div class="profile-row"><span class="k">📨 Отправлено</span><span class="v">${a.broadcastLog.sent}</span></div><div class="profile-row"><span class="k">⚠️ Не удалось</span><span class="v">${a.broadcastLog.failed}</span></div></div>` : ''}
+    `;
+  }
+  return '';
+}
+
+/* ============== BINDINGS ============== */
+function bindDynamic() {
+  document.querySelectorAll('[data-open-cat]').forEach(el => {
+    el.addEventListener('click', () => go('products', { categoryId: Number(el.dataset.openCat) }));
+  });
+  document.querySelectorAll('[data-open-prod]').forEach(el => {
+    el.addEventListener('click', () => go('product', { productId: Number(el.dataset.openProd) }));
+  });
+
+  const qtyMinus = document.getElementById('qtyMinus');
+  const qtyPlus = document.getElementById('qtyPlus');
+  const qtyValue = document.getElementById('qtyValue');
+  if (qtyMinus) {
+    let qty = 1;
+    const p = state.products.find(x => x.id === state.productId);
+    const updateBuy = () => { qtyValue.textContent = qty; document.getElementById('buyPrice').textContent = qty * p.star_price; };
+    qtyMinus.addEventListener('click', () => { if (qty > 1) { qty--; updateBuy(); } });
+    qtyPlus.addEventListener('click', () => { qty++; updateBuy(); });
+    document.getElementById('addCartBtn').addEventListener('click', () => addToCart(p.id, qty));
+    document.getElementById('buyNowBtn').addEventListener('click', () => confirmPurchase(p, qty));
+  }
+
+  document.querySelectorAll('[data-cart-plus]').forEach(el => {
+    el.addEventListener('click', () => addToCart(Number(el.dataset.cartPlus), 1).then(render));
+  });
+  document.querySelectorAll('[data-cart-minus]').forEach(el => {
+    el.addEventListener('click', async () => {
+      const pid = Number(el.dataset.cartMinus);
+      const data = await api('/api/cart/update', { method: 'POST', body: JSON.stringify({ product_id: pid, delta: -1 }) });
+      state.cart = data.cart; render();
+    });
+  });
+
+  const checkoutBtn = document.getElementById('checkoutBtn');
+  if (checkoutBtn) checkoutBtn.addEventListener('click', checkoutCart);
+  const topupBtn = document.getElementById('topupBtn');
+  if (topupBtn) topupBtn.addEventListener('click', openTopupSheet);
+  const supportRow = document.getElementById('supportRow');
+  if (supportRow) supportRow.addEventListener('click', openSupportLink);
+  const leaveReviewBtn = document.getElementById('leaveReviewBtn');
+  if (leaveReviewBtn) leaveReviewBtn.addEventListener('click', openReviewSheet);
+
+  const openAdminBtn = document.getElementById('openAdminBtn');
+  if (openAdminBtn) openAdminBtn.addEventListener('click', () => goAdmin('menu'));
+
+  document.querySelectorAll('[data-admin-go]').forEach(el => {
+    el.addEventListener('click', () => goAdmin(el.dataset.adminGo));
+  });
+  document.querySelectorAll('[data-req-approve]').forEach(el => {
+    el.addEventListener('click', async () => {
+      const id = Number(el.dataset.reqApprove);
+      await api(`/api/admin/requests/${id}/approve`, { method: 'POST' });
+      await loadAdminData();
+      toast('Заявка подтверждена'); render();
+    });
+  });
+  document.querySelectorAll('[data-req-reject]').forEach(el => {
+    el.addEventListener('click', async () => {
+      const id = Number(el.dataset.reqReject);
+      await api(`/api/admin/requests/${id}/reject`, { method: 'POST' });
+      await loadAdminData();
+      toast('Заявка отклонена'); render();
+    });
+  });
+
+  document.querySelectorAll('[data-cat-rename]').forEach(el => {
+    el.addEventListener('click', () => {
+      const c = state.categories.find(x => x.id === Number(el.dataset.catRename));
+      openSheet(`
+        <h3>Переименовать категорию</h3>
+        <input id="catNameInput" value="${c.name}">
+        <div class="btn-row"><button class="btn btn-secondary" id="cancelSheet">Отмена</button><button class="btn btn-primary" id="saveCatName">Сохранить</button></div>
+      `);
+      document.getElementById('cancelSheet').onclick = closeSheet;
+      document.getElementById('saveCatName').onclick = async () => {
+        const name = document.getElementById('catNameInput').value.trim() || c.name;
+        await api(`/api/admin/categories/${c.id}`, { method: 'PUT', body: JSON.stringify({ name }) });
+        c.name = name;
+        closeSheet(); toast('Категория обновлена'); render();
+      };
+    });
+  });
+  document.querySelectorAll('[data-cat-delete]').forEach(el => {
+    el.addEventListener('click', async () => {
+      const id = Number(el.dataset.catDelete);
+      await api(`/api/admin/categories/${id}`, { method: 'DELETE' });
+      state.categories = state.categories.filter(c => c.id !== id);
+      state.products.forEach(p => { if (p.category_id === id) p.category_id = null; });
+      toast('Категория удалена'); render();
+    });
+  });
+  const addCatFab = document.getElementById('addCatFab');
+  if (addCatFab) addCatFab.addEventListener('click', () => {
+    openSheet(`
+      <h3>Новая категория</h3>
+      <input id="newCatName" placeholder="Название категории">
+      <div class="btn-row"><button class="btn btn-secondary" id="cancelSheet">Отмена</button><button class="btn btn-primary" id="saveNewCat">Добавить</button></div>
+    `);
+    document.getElementById('cancelSheet').onclick = closeSheet;
+    document.getElementById('saveNewCat').onclick = async () => {
+      const name = document.getElementById('newCatName').value.trim();
+      if (!name) return;
+      await api('/api/admin/categories', { method: 'POST', body: JSON.stringify({ name }) });
+      await loadAdminData();
+      closeSheet(); toast('Категория добавлена'); render();
+    };
+  });
+
+  document.querySelectorAll('[data-prod-edit]').forEach(el => {
+    el.addEventListener('click', () => openProductSheet(state.products.find(p => p.id === Number(el.dataset.prodEdit))));
+  });
+  document.querySelectorAll('[data-prod-delete]').forEach(el => {
+    el.addEventListener('click', async () => {
+      const id = Number(el.dataset.prodDelete);
+      await api(`/api/admin/products/${id}`, { method: 'DELETE' });
+      state.products = state.products.filter(p => p.id !== id);
+      toast('Товар удалён'); render();
+    });
+  });
+  document.querySelectorAll('[data-prod-delivery]').forEach(el => {
+    el.addEventListener('click', () => openDeliverySheet(Number(el.dataset.prodDelivery)));
+  });
+  const addProdFab = document.getElementById('addProdFab');
+  if (addProdFab) addProdFab.addEventListener('click', () => openProductSheet(null));
+
+  document.querySelectorAll('[data-setting-edit]').forEach(el => {
+    el.addEventListener('click', () => {
+      const key = el.dataset.settingEdit;
+      const label = key === 'shop_name' ? 'Название магазина' : 'Юзернейм поддержки';
+      openSheet(`
+        <h3>${label}</h3>
+        <input id="settingInput" value="${state.settings[key]}">
+        <div class="btn-row"><button class="btn btn-secondary" id="cancelSheet">Отмена</button><button class="btn btn-primary" id="saveSetting">Сохранить</button></div>
+      `);
+      document.getElementById('cancelSheet').onclick = closeSheet;
+      document.getElementById('saveSetting').onclick = async () => {
+        const value = document.getElementById('settingInput').value.trim() || state.settings[key];
+        await api('/api/admin/settings', { method: 'POST', body: JSON.stringify({ key, value }) });
+        state.settings[key] = value;
+        closeSheet(); toast('Настройки сохранены'); render();
+      };
+    });
+  });
+
+  document.querySelectorAll('[data-admin-remove]').forEach(el => {
+    el.addEventListener('click', async () => {
+      const id = Number(el.dataset.adminRemove);
+      await api(`/api/admin/admins/${id}`, { method: 'DELETE' });
+      state.admin.admins = state.admin.admins.filter(a => a.id !== id);
+      toast('Админ удалён'); render();
+    });
+  });
+  document.querySelectorAll('[data-user-ban]').forEach(el => {
+    el.addEventListener('click', async () => {
+      const id = Number(el.dataset.userBan);
+      const u = state.admin.users.find(x => x.id === id);
+      await api(`/api/admin/users/${id}/${u.banned ? 'unban' : 'ban'}`, { method: 'POST' });
+      u.banned = !u.banned;
+      toast(u.banned ? 'Пользователь забанен' : 'Пользователь разбанен'); render();
+    });
+  });
+  document.querySelectorAll('[data-user-addbal]').forEach(el => {
+    el.addEventListener('click', () => {
+      const u = state.admin.users.find(x => x.id === Number(el.dataset.userAddbal));
+      openSheet(`
+        <h3>Начислить баланс @${u.username}</h3>
+        <input id="addBalAmount" type="number" placeholder="Сумма в ⭐ (можно отрицательную)">
+        <div class="btn-row"><button class="btn btn-secondary" id="cancelSheet">Отмена</button><button class="btn btn-primary" id="saveAddBal">Начислить</button></div>
+      `);
+      document.getElementById('cancelSheet').onclick = closeSheet;
+      document.getElementById('saveAddBal').onclick = async () => {
+        const val = Number(document.getElementById('addBalAmount').value || 0);
+        const data = await api(`/api/admin/users/${u.id}/balance`, { method: 'POST', body: JSON.stringify({ delta: val }) });
+        u.balance_star = data.balance_star;
+        closeSheet(); toast('Баланс обновлён'); render();
+      };
+    });
+  });
+  document.querySelectorAll('[data-user-reset]').forEach(el => {
+    el.addEventListener('click', async () => {
+      const u = state.admin.users.find(x => x.id === Number(el.dataset.userReset));
+      await api(`/api/admin/users/${u.id}/reset-balance`, { method: 'POST' });
+      u.balance_star = 0;
+      toast('Баланс обнулён'); render();
+    });
+  });
+  const sendBroadcastBtn = document.getElementById('sendBroadcastBtn');
+  if (sendBroadcastBtn) sendBroadcastBtn.addEventListener('click', async () => {
+    const text = document.getElementById('broadcastText').value.trim();
+    if (!text) { toast('Введите текст рассылки'); return; }
+    const data = await api('/api/admin/broadcast', { method: 'POST', body: JSON.stringify({ text }) });
+    state.admin.broadcastLog = { sent: data.sent, failed: data.failed };
+    toast('Рассылка отправлена'); render();
+  });
+
+  const addAdminBtn = document.getElementById('addAdminBtn');
+  if (addAdminBtn) addAdminBtn.addEventListener('click', () => {
+    openSheet(`
+      <h3>Добавить админа</h3>
+      <input id="adminIdInput" placeholder="User ID (узнать у @userinfobot)">
+      <div class="btn-row"><button class="btn btn-secondary" id="cancelSheet">Отмена</button><button class="btn btn-primary" id="saveAdmin">Добавить</button></div>
+    `);
+    document.getElementById('cancelSheet').onclick = closeSheet;
+    document.getElementById('saveAdmin').onclick = async () => {
+      const id = document.getElementById('adminIdInput').value.trim();
+      if (!id) return;
+      await api('/api/admin/admins', { method: 'POST', body: JSON.stringify({ user_id: id }) });
+      await loadAdminData();
+      closeSheet(); toast('Админ добавлен'); render();
+    };
+  });
+}
+
+function openDeliverySheet(productId) {
+  const p = state.products.find(x => x.id === productId);
+  openSheet(`
+    <h3>Авто-выдача: ${p.name}</h3>
+    <textarea id="deliveryText" placeholder="Текст, который придёт покупателю после оплаты">${''}</textarea>
+    <div style="margin:10px 0; font-size:13px; color:var(--text-dim);">Можно прикрепить файл (ключ, архив, картинку и т.п.):</div>
+    <input type="file" id="deliveryFile" style="width:100%; margin-bottom:10px;">
+    <div class="btn-row">
+      <button class="btn btn-danger" id="clearDelivery">Убрать авто-выдачу</button>
+      <button class="btn btn-primary" id="saveDelivery">Сохранить</button>
+    </div>
+    <button class="btn btn-secondary" id="cancelSheet" style="margin-top:8px;">Закрыть</button>
+  `);
+  document.getElementById('cancelSheet').onclick = closeSheet;
+  document.getElementById('clearDelivery').onclick = async () => {
+    await api(`/api/admin/products/${productId}/delivery`, { method: 'DELETE' });
+    p.auto_delivery = false;
+    closeSheet(); toast('Авто-выдача убрана'); render();
+  };
+  document.getElementById('saveDelivery').onclick = async () => {
+    const text = document.getElementById('deliveryText').value.trim();
+    const file = document.getElementById('deliveryFile').files[0];
+    const fd = new FormData();
+    if (text) fd.append('text', text);
+    if (file) fd.append('file', file);
+    await apiForm(`/api/admin/products/${productId}/delivery`, fd);
+    p.auto_delivery = true;
+    closeSheet(); toast('Авто-выдача сохранена'); render();
+  };
+}
+
+function openProductSheet(p) {
+  const isNew = !p;
+  openSheet(`
+    <h3>${isNew ? 'Новый товар' : 'Изменить товар'}</h3>
+    <input id="prodName" placeholder="Название" value="${p ? p.name : ''}">
+    <select id="prodCat">
+      ${state.categories.map(c => `<option value="${c.id}" ${p && p.category_id === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+    </select>
+    <input id="prodPrice" type="number" placeholder="Цена в ⭐" value="${p ? p.star_price : ''}">
+    <textarea id="prodDesc" placeholder="Описание">${p ? (p.description || '') : ''}</textarea>
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn btn-secondary" id="cancelSheet">Отмена</button>
+      <button class="btn btn-primary" id="saveProd">Сохранить</button>
+    </div>
+  `);
+  document.getElementById('cancelSheet').onclick = closeSheet;
+  document.getElementById('saveProd').onclick = async () => {
+    const name = document.getElementById('prodName').value.trim();
+    const category_id = Number(document.getElementById('prodCat').value) || null;
+    const star_price = Number(document.getElementById('prodPrice').value || 0);
+    const description = document.getElementById('prodDesc').value.trim();
+    if (!name || !star_price) { toast('Заполните название и цену'); return; }
+    if (isNew) {
+      const res = await api('/api/admin/products', { method: 'POST', body: JSON.stringify({ name, category_id, star_price, description }) });
+      state.products.push({ id: res.id, name, category_id, star_price, description, auto_delivery: false });
+    } else {
+      await api(`/api/admin/products/${p.id}`, { method: 'PUT', body: JSON.stringify({ name, category_id, star_price, description }) });
+      Object.assign(p, { name, category_id, star_price, description });
+    }
+    closeSheet(); toast('Товар сохранён'); render();
+  };
+}
+
+/* ============== ПОКУПКИ / ОПЛАТА ============== */
+async function refreshBootstrap() {
+  const data = await api('/api/bootstrap');
+  Object.assign(state, {
+    settings: data.settings, user: data.user, isAdmin: data.isAdmin,
+    categories: data.categories, products: data.products, cart: data.cart,
+    reviews: data.reviews, purchasesConfirmed: data.purchasesConfirmed,
+    myRequests: data.myRequests, reviewablePurchases: data.reviewablePurchases,
+  });
+}
+
+async function payWithStars(invoiceLink, requestId) {
+  if (!tgApp) { toast('Открой магазин через Telegram, чтобы оплатить'); return; }
+  tgApp.openInvoice(invoiceLink, async (status) => {
+    if (status === 'paid') {
+      toast('Оплата прошла! Проверяем…');
+      for (let i = 0; i < 6; i++) {
+        await new Promise(r => setTimeout(r, 700));
+        try {
+          const st = await api(`/api/requests/${requestId}`);
+          if (st.status === 'confirmed') break;
+        } catch (e) { break; }
+      }
+      await refreshBootstrap();
+      toast('Готово! Товар придёт в этот чат.');
+      go('categories'); state.tab = 'catalog';
+    } else if (status === 'failed') {
+      toast('Оплата не прошла');
+    } else if (status === 'cancelled') {
+      toast('Оплата отменена');
+    }
+  });
+}
+
+function confirmPurchase(p, qty) {
+  const total = p.star_price * qty;
+  const canBalance = state.user.balance_star >= total;
+  openSheet(`
+    <h3>Подтверждение покупки</h3>
+    <div class="profile-row"><span class="k">Товар</span><span class="v">${p.name} × ${qty}</span></div>
+    <div class="profile-row"><span class="k">Сумма</span><span class="v">⭐ ${total}</span></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-secondary" id="cancelSheet">Отмена</button>
+      ${canBalance ? `<button class="btn btn-outline" id="payBalance">Списать с баланса</button>` : ''}
+      <button class="btn btn-primary" id="payStars">Оплатить ⭐</button>
+    </div>
+  `);
+  document.getElementById('cancelSheet').onclick = closeSheet;
+  const balBtn = document.getElementById('payBalance');
+  if (balBtn) balBtn.onclick = async () => {
+    await api('/api/checkout/balance', { method: 'POST', body: JSON.stringify({ mode: 'single', product_id: p.id, qty }) });
+    await refreshBootstrap();
+    closeSheet(); toast('Оплачено с баланса! Товар придёт в этот чат.');
+    go('categories'); state.tab = 'catalog';
+  };
+  document.getElementById('payStars').onclick = async () => {
+    closeSheet();
+    const res = await api('/api/checkout/stars', { method: 'POST', body: JSON.stringify({ mode: 'single', product_id: p.id, qty }) });
+    payWithStars(res.invoice_link, res.request_id);
+  };
+}
+function checkoutCart() {
+  const total = cartTotal();
+  const canBalance = state.user.balance_star >= total;
+  openSheet(`
+    <h3>Оформление заказа</h3>
+    <div class="profile-row"><span class="k">Товаров</span><span class="v">${cartCount()}</span></div>
+    <div class="profile-row"><span class="k">Итого</span><span class="v">⭐ ${total}</span></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-secondary" id="cancelSheet">Отмена</button>
+      ${canBalance ? `<button class="btn btn-outline" id="payBalance">Списать с баланса</button>` : ''}
+      <button class="btn btn-primary" id="payStars">Оплатить ⭐</button>
+    </div>
+  `);
+  document.getElementById('cancelSheet').onclick = closeSheet;
+  const balBtn = document.getElementById('payBalance');
+  if (balBtn) balBtn.onclick = async () => {
+    await api('/api/checkout/balance', { method: 'POST', body: JSON.stringify({ mode: 'cart' }) });
+    await refreshBootstrap();
+    closeSheet(); toast('Оплачено с баланса! Товары придут в этот чат.'); render();
+  };
+  document.getElementById('payStars').onclick = async () => {
+    closeSheet();
+    const res = await api('/api/checkout/stars', { method: 'POST', body: JSON.stringify({ mode: 'cart' }) });
+    payWithStars(res.invoice_link, res.request_id);
+  };
+}
+function openTopupSheet() {
+  openSheet(`
+    <h3>Пополнение баланса</h3>
+    <input type="number" id="topupAmount" placeholder="Сумма в ⭐" min="1">
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="cancelSheet">Отмена</button>
+      <button class="btn btn-primary" id="submitTopup">Оплатить ⭐</button>
+    </div>
+  `);
+  document.getElementById('cancelSheet').onclick = closeSheet;
+  document.getElementById('submitTopup').onclick = async () => {
+    const val = Number(document.getElementById('topupAmount').value || 0);
+    if (val <= 0) return;
+    closeSheet();
+    const res = await api('/api/topup/stars', { method: 'POST', body: JSON.stringify({ amount: val }) });
+    payWithStars(res.invoice_link, res.request_id);
+  };
+}
+function openReviewSheet() {
+  let picked = 5;
+  const options = state.reviewablePurchases;
+  openSheet(`
+    <h3>Оставить отзыв</h3>
+    ${options.length ? `
+      <select id="reviewPurchase">
+        ${options.map(o => `<option value="${o.request_id}|${o.product_id || ''}">${o.productName || 'Покупка'}</option>`).join('')}
+      </select>
+    ` : `<div style="font-size:13px; color:var(--text-dim); margin-bottom:10px;">Отзыв не привязан к конкретной покупке.</div>`}
+    <div class="star-pick" id="starPick">${[1, 2, 3, 4, 5].map(n => `<span data-star="${n}" class="on">★</span>`).join('')}</div>
+    <textarea id="reviewText" placeholder="Комментарий (необязательно)"></textarea>
+    <div class="btn-row"><button class="btn btn-secondary" id="cancelSheet">Отмена</button><button class="btn btn-primary" id="submitReview">Отправить</button></div>
+  `);
+  document.querySelectorAll('#starPick span').forEach(el => {
+    el.addEventListener('click', () => {
+      picked = Number(el.dataset.star);
+      document.querySelectorAll('#starPick span').forEach(s => s.classList.toggle('on', Number(s.dataset.star) <= picked));
+    });
+  });
+  document.getElementById('cancelSheet').onclick = closeSheet;
+  document.getElementById('submitReview').onclick = async () => {
+    const text = document.getElementById('reviewText').value.trim();
+    let request_id = null, product_id = null;
+    const sel = document.getElementById('reviewPurchase');
+    if (sel) { const [rid, pid] = sel.value.split('|'); request_id = Number(rid); product_id = pid ? Number(pid) : null; }
+    await api('/api/reviews', { method: 'POST', body: JSON.stringify({ rating: picked, text, request_id, product_id }) });
+    closeSheet(); toast('Спасибо за отзыв!');
+    await refreshBootstrap(); render();
+  };
+}
+
+/* ============== СТАРТ ============== */
+(async function init() {
+  try {
+    await refreshBootstrap();
+  } catch (e) {
+    console.error(e);
+    document.getElementById('view').innerHTML = `<div class="empty">⚠️ Не удалось загрузить магазин.<br>${(e && e.message) || ''}</div>`;
+    return;
+  }
+  _loading = false;
+  render();
+})();
+</script>
+</body>
+</html>
